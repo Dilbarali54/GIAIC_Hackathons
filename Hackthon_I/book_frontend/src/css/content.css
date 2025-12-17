@@ -1,0 +1,8 @@
+.content blockquote {
+  color: var(--ifm-color-content);
+}
+
+.content table th,
+.content table td {
+  color: var(--ifm-color-content);
+}

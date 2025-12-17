@@ -1,0 +1,32 @@
+.header {
+  background-color: var(--ifm-background-color);
+  border-bottom: 1px solid var(--ifm-border-color);
+  box-shadow: var(--ifm-global-shadow-light);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-title a {
+  color: var(--ifm-font-color-base);
+  font-weight: var(--ifm-font-weight-bold);
+  transition: color 0.3s ease;
+}
+
+.header-title a:hover {
+  color: var(--ifm-color-primary);
+}
+
+.footer {
+  background-color: var(--ifm-background-surface-color);
+  padding: var(--ifm-spacing-2xl);
+  border-top: 1px solid var(--ifm-border-color);
+  text-align: center;
+  color: var(--ifm-color-content-secondary);
+  transition: background-color 0.3s ease;
+}
+
+.footer a:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: underline;
+}

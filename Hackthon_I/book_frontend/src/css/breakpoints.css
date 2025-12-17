@@ -1,0 +1,4 @@
+@media (min-width: 576px) { .ifm-breakpoint-sm {} }
+@media (min-width: 768px) { .ifm-breakpoint-md {} }
+@media (min-width: 992px) { .ifm-breakpoint-lg {} }
+@media (min-width: 1200px) { .ifm-breakpoint-xl {} }

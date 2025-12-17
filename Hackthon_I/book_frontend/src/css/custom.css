@@ -1,0 +1,23 @@
+/* === LIGHT MODE READABILITY FIXES === */
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+[data-theme='light'] p,
+[data-theme='light'] li,
+[data-theme='light'] span,
+[data-theme='light'] td,
+[data-theme='light'] th {
+  color: var(--ifm-color-content);
+}
+
+[data-theme='light'] .menu__link,
+[data-theme='light'] .table-of-contents__link,
+[data-theme='light'] .pagination-title,
+[data-theme='light'] .breadcrumbs__item a {
+  color: var(--ifm-color-content);
+}
+
+[data-theme='light'] .dropdown__link {
+  color: var(--ifm-color-content);
+}

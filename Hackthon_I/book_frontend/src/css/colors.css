@@ -1,0 +1,9 @@
+:root {
+  /* Text Colors – Improved Contrast */
+  --ifm-font-color-base: #08090d;            /* darker than before */
+  --ifm-color-content: #040b17;              /* main readable text */
+  --ifm-color-content-secondary: #334155;    /* was too light */
+
+  /* Surface tweak */
+  --ifm-background-surface-color: #f1f5f9;   /* slightly darker */
+}
