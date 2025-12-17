@@ -1,0 +1,393 @@
+openapi: 3.0.3
+info:
+  title: Vision-Language-Action (VLA) API
+  description: API for the Vision-Language-Action module that enables voice-controlled humanoid robot execution through LLM-powered cognitive planning.
+  version: 1.0.0
+  contact:
+    name: VLA Development Team
+    email: vla-team@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://vla-api.example.com
+    description: Production server
+
+paths:
+  /voice/transcribe:
+    post:
+      summary: Transcribe audio to text using OpenAI Whisper
+      description: Converts audio input to text using OpenAI's Whisper API
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - audio
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                  description: Audio file to transcribe
+                language:
+                  type: string
+                  description: Language of the audio (default: auto-detect)
+                response_format:
+                  type: string
+                  enum: [json, text, srt, verbose_json, vtt]
+                  default: json
+                  description: Format of the response
+      responses:
+        '200':
+          description: Successfully transcribed audio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionResponse'
+        '400':
+          description: Invalid audio format or missing audio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cognitive/plan:
+    post:
+      summary: Generate cognitive plan from natural language
+      description: Uses LLM to generate a sequence of actions from natural language command
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanRequest'
+      responses:
+        '200':
+          description: Successfully generated cognitive plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid command or missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /robot/execute:
+    post:
+      summary: Execute action plan on robot
+      description: Converts cognitive plan to ROS 2 commands and executes on robot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionRequest'
+      responses:
+        '200':
+          description: Successfully executed action plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '400':
+          description: Invalid action plan or robot configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Robot execution failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /demo/run:
+    post:
+      summary: Run complete VLA demonstration
+      description: Executes end-to-end VLA pipeline from voice input to robot action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoRequest'
+      responses:
+        '200':
+          description: Successfully completed demonstration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoResponse'
+        '400':
+          description: Invalid demo request or missing parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Demo execution failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    TranscriptionResponse:
+      type: object
+      properties:
+        text:
+          type: string
+          description: The transcribed text
+        confidence:
+          type: number
+          format: float
+          description: Confidence score of the transcription (0.0-1.0)
+        language:
+          type: string
+          description: Detected language of the audio
+        duration:
+          type: number
+          format: float
+          description: Duration of the audio in seconds
+      required:
+        - text
+        - confidence
+
+    PlanRequest:
+      type: object
+      properties:
+        command:
+          type: string
+          description: Natural language command to process
+        context:
+          type: object
+          description: Additional context for the robot environment
+          additionalProperties: true
+        robot_model:
+          type: string
+          description: Type of robot for action planning
+      required:
+        - command
+
+    PlanResponse:
+      type: object
+      properties:
+        plan_id:
+          type: string
+          description: Unique identifier for the generated plan
+        command:
+          type: string
+          description: Original command
+        intent:
+          type: string
+          description: High-level intent extracted from command
+        action_sequence:
+          type: array
+          items:
+            $ref: '#/components/schemas/RobotAction'
+          description: Sequence of actions to execute
+        confidence:
+          type: number
+          format: float
+          description: Confidence in the plan (0.0-1.0)
+        timestamp:
+          type: string
+          format: date-time
+          description: When the plan was generated
+      required:
+        - plan_id
+        - action_sequence
+        - confidence
+
+    RobotAction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the action
+        type:
+          type: string
+          description: Type of action (move, pick, place, speak, etc.)
+        parameters:
+          type: object
+          description: Specific parameters for the action
+          additionalProperties: true
+        priority:
+          type: integer
+          description: Execution priority (1-10, 1 being highest)
+        timeout:
+          type: integer
+          description: Maximum time to execute in seconds
+        dependencies:
+          type: array
+          items:
+            type: string
+          description: List of action IDs that must complete first
+      required:
+        - id
+        - type
+        - parameters
+
+    ExecutionRequest:
+      type: object
+      properties:
+        plan_id:
+          type: string
+          description: ID of the plan to execute
+        action_sequence:
+          type: array
+          items:
+            $ref: '#/components/schemas/RobotAction'
+        simulation_mode:
+          type: boolean
+          description: Whether to run in simulation mode
+        robot_config:
+          type: object
+          description: Robot-specific configuration
+          additionalProperties: true
+      required:
+        - plan_id
+        - action_sequence
+
+    ExecutionResponse:
+      type: object
+      properties:
+        execution_id:
+          type: string
+          description: Unique identifier for the execution
+        status:
+          type: string
+          enum: [success, failure, timeout, cancelled]
+          description: Overall execution status
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionResult'
+          description: Results for each action in the sequence
+        execution_time:
+          type: number
+          format: float
+          description: Total execution time in seconds
+      required:
+        - execution_id
+        - status
+        - results
+
+    ActionResult:
+      type: object
+      properties:
+        action_id:
+          type: string
+          description: ID of the action
+        status:
+          type: string
+          enum: [success, failure, timeout, cancelled]
+          description: Execution status of the action
+        result_data:
+          type: object
+          description: Data returned from the action execution
+          additionalProperties: true
+        error_message:
+          type: string
+          description: Error description if action failed
+        execution_time:
+          type: number
+          format: float
+          description: Time taken to execute in seconds
+
+    DemoRequest:
+      type: object
+      properties:
+        voice_command:
+          type: string
+          description: Voice command to process
+        simulation_mode:
+          type: boolean
+          description: Whether to run in simulation mode
+        timeout:
+          type: integer
+          description: Maximum time for demo in seconds (default: 60)
+      required:
+        - voice_command
+
+    DemoResponse:
+      type: object
+      properties:
+        demo_id:
+          type: string
+          description: Unique identifier for the demo
+        status:
+          type: string
+          enum: [success, failure, timeout]
+          description: Overall demo status
+        transcription:
+          $ref: '#/components/schemas/TranscriptionResponse'
+        plan:
+          $ref: '#/components/schemas/PlanResponse'
+        execution:
+          $ref: '#/components/schemas/ExecutionResponse'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the demo was completed
+      required:
+        - demo_id
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+      required:
+        - error
+        - code
+
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: OpenAI API key for authentication
+
+security:
+  - apiKey: []
